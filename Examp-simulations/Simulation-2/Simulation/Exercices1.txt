@@ -1,0 +1,101 @@
+🧑‍💻 NUEVO SET DE EJERCICIOS AVANZADOS CKA (Nivel Difícil)
+1. Crear un namespace con límites de recursos
+Crea un namespace llamado prod con un ResourceQuota que limite:
+
+CPU total: 2
+
+Memoria total: 4Gi
+
+Pods máximos: 10
+
+2. Crear un Pod con requests y limits
+En el namespace prod, crea un Pod llamado limited-pod con:
+
+Imagen: nginx
+
+Requests: 100m CPU, 128Mi memoria
+
+Limits: 200m CPU, 256Mi memoria
+
+3. Configurar un Pod con liveness y readiness probes
+Crea un Deployment llamado health-app con:
+
+Imagen: nginx
+
+Liveness probe: HTTP GET /healthz en el puerto 80
+
+Readiness probe: HTTP GET /ready en el puerto 80
+
+4. Crear un DaemonSet
+Crea un DaemonSet llamado log-agent que ejecute la imagen busybox con un comando que imprima logs cada 5 segundos.
+
+5. Crear un Job y un CronJob
+Job: data-job que ejecute echo "processing"
+
+CronJob: backup-job que corra cada minuto y ejecute date
+
+6. Configurar un Pod con un initContainer
+Crea un Pod llamado init-pod que:
+
+initContainer: cree un archivo /work/ready
+
+contenedor principal: muestre el contenido de /work
+
+7. Crear un NetworkPolicy restrictiva
+En el namespace prod, crea una NetworkPolicy que:
+
+Solo permita tráfico entrante al Pod app desde Pods con label role=frontend
+
+Bloquee todo lo demás
+
+8. Crear un ServiceAccount con permisos cluster-wide
+Crea un ServiceAccount llamado cluster-reader con permisos para:
+
+Listar todos los Pods en todos los namespaces
+
+Listar nodos del clúster
+
+9. Configurar un Pod que use un volumen projected
+Crea un Pod que combine:
+
+ConfigMap
+
+Secret
+
+Downward API
+
+En un solo volumen projected.
+
+10. Hacer troubleshooting de un Pod que no puede resolver DNS
+Simula un Pod llamado dns-test que no puede resolver nombres. Tu tarea es:
+
+Verificar CoreDNS
+
+Verificar ConfigMap de CoreDNS
+
+Verificar que el Pod use el DNS correcto
+
+11. Crear un Pod que use un hostPath con permisos correctos
+Crea un Pod llamado hostpath-pod que monte /var/log del nodo. Asegúrate de que el contenedor pueda leer y escribir.
+
+12. Crear un Pod con tolerations
+Crea un Pod que pueda ejecutarse en un nodo con taint:
+
+Código
+key=maintenance:NoSchedule
+13. Crear un Deployment con estrategia RollingUpdate personalizada
+Crea un Deployment llamado roll-app con:
+
+maxSurge: 2
+
+maxUnavailable: 0
+
+Actualiza la imagen y verifica el rollout.
+
+14. Crear un Pod que use un runtimeClass
+Crea un Pod llamado sandboxed-pod que use un runtimeClassName llamado gvisor.
+
+15. Hacer un backup y restore de un solo recurso
+Haz backup del Deployment web-deploy en un archivo YAML. Elimínalo y restáuralo desde el archivo.
+
+

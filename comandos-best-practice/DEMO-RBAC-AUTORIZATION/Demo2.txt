@@ -1,0 +1,51 @@
+Authentication and Authorization Demo Guide (2)
+
+Create lfs158 namespace:
+
+$ kubectl create namespace lfs158
+
+namespace/lfs158 created
+
+Create the rbac directory and cd into it:
+
+$ mkdir rbac
+
+$ cd rbac/
+
+Create a new user bob on your workstation, and set bob's password as well (the system will prompt you to enter the password twice) :
+
+~/rbac$ sudo useradd -s /bin/bash bob
+
+~/rbac$ sudo passwd bob
+
+Create a private key for the new user bob with the openssl tool, then create a certificate signing request for bob with the same openssl tool:
+
+~/rbac$ openssl genrsa -out bob.key 2048
+
+Generating RSA private key, 2048 bit long modulus (2 primes)
+.................................................+++++
+.........................+++++
+e is 65537 (0x010001)
+
+~/rbac$ openssl req -new -key bob.key \
+  -out bob.csr -subj "/CN=bob/O=learner"
+
+Create a YAML definition manifest for a certificate signing request object, and save it with a blank value for the request field: 
+
+~/rbac$ vim signing-request.yaml
+
+apiVersion: certificates.k8s.io/v1
+kind: CertificateSigningRequest
+metadata:
+  name: bob-csr
+spec:
+  groups:
+  - system:authenticated
+  request: <assign encoded value from next cat command>
+  signerName: kubernetes.io/kube-apiserver-client
+  usages:
+  - digital signature
+  - key encipherment
+  - client auth
+
+Cont’d on the next page.

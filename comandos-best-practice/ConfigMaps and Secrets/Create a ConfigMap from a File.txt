@@ -1,0 +1,14 @@
+Create a ConfigMap from a File
+
+First, we need to create a file permission-reset.properties with the following configuration data stored as key-value pairs:
+
+permission=read-only
+allowed="true"
+resetCount=3
+
+We can then create the ConfigMap with the following command:
+
+$ kubectl create configmap permission-config \
+  --from-file=<path/to/>permission-reset.properties
+
+configmap/permission-config created

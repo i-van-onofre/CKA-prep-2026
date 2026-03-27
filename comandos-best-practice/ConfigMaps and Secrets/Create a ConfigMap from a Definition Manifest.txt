@@ -1,0 +1,21 @@
+Create a ConfigMap from a Definition Manifest
+
+For a declarative approach, first we need to create a definition manifest file with the following content:
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: customer1
+data:
+  TEXT1: Customer1_Company
+  TEXT2: Welcomes You
+  COMPANY: Customer1 Company Technology Pct. Ltd.
+
+where we specify the kind, metadata, and data fields, targeting the v1 endpoint of the API server.
+
+If we name the file with the definition above as customer1-configmap.yaml, we can then create the ConfigMap with the following command:
+
+$ kubectl create -f customer1-configmap.yaml
+
+configmap/customer1 created
+

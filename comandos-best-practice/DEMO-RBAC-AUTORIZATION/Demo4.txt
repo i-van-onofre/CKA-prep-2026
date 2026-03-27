@@ -1,0 +1,66 @@
+Authentication and Authorization Demo Guide (4)
+
+Extract the approved certificate from the certificate signing request, decode it with base64 and save it as a certificate file. Then view the certificate in the newly created certificate file:
+
+~/rbac$ kubectl get csr bob-csr \
+  -o jsonpath='{.status.certificate}' | \
+  base64 -d > bob.crt
+
+~/rbac$ cat bob.crt
+
+-----BEGIN CERTIFICATE-----
+MIIDGzCCA...
+...
+...NOZRRZBVunTjK7A==
+-----END CERTIFICATE-----
+
+Configure the kubectl client's configuration manifest with user bob's credentials by assigning his key and certificate: 
+
+~/rbac$ kubectl config set-credentials bob \
+  --client-certificate=bob.crt --client-key=bob.key
+
+User "bob" set.
+
+Create a new context entry in the kubectl client's configuration manifest for user bob, associated with the lfs158 namespace in the minikube cluster:
+
+~/rbac$ kubectl config set-context bob-context \
+  --cluster=minikube --namespace=lfs158 --user=bob
+
+Context "bob-context" created.
+
+View the contents of the kubectl client's configuration manifest again, observing the new context entry bob-context, and the new user entry bob (the output is redacted for readability):
+
+~/rbac$ kubectl config view
+
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority: /home/student/.minikube/ca.crt
+    ...
+    server: ht‌tps://192.168.99.100:8443
+  name: minikube
+contexts:
+- context:
+    cluster: minikube
+    ...
+    user: minikube
+  name: minikube
+- context:
+    cluster: minikube
+    namespace: lfs158
+    user: bob
+  name: bob-context
+current-context: minikube
+kind: Config
+preferences: {}
+users:
+- name: minikube
+  user:
+    client-certificate: /home/student/.minikube/profiles/minikube/client.crt
+    client-key: /home/student/.minikube/profiles/minikube/client.key
+- name: bob
+  user:
+    client-certificate: /home/student/rbac/bob.crt
+    client-key: /home/student/rbac/bob.key
+
+Cont’d on the next page.

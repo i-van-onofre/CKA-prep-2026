@@ -1,0 +1,118 @@
+Comando/Sintaxis	Ejemplo	Uso CKA
+Generación de YAML	kubectl run mypod --image=nginx --dry-run=client -o yaml > pod.yaml	Genera el manifiesto YAML en el archivo pod.yaml sin crearlo en el clúster. ¡Esencial!
+Generar Deployment	kubectl create deployment my-deploy --image=nginx --dry-run=client -o yaml > deploy.yaml	Crea la plantilla YAML de un Deployment.
+Generar Service	kubectl expose pod mypod --port=80 --target-port=8080 --dry-run=client -o yaml > svc.yaml	Crea la plantilla YAML de un Service.
+
+ 
+    Consulta exitosa
+
+Obtener una lista exhaustiva de "100 comandos" específicos de kubectl para el examen CKA (Certified Kubernetes Administrator) puede ser complejo, ya que el examen se centra en la resolución práctica de tareas y no en la memorización de un número fijo de comandos.
+
+La clave es dominar los comandos más importantes y, sobre todo, saber cómo usar los comandos imperativos y el parámetro --dry-run para generar manifiestos YAML rápidamente, ya que esto ahorra mucho tiempo en el examen.
+
+A continuación, se presenta una categorización de los comandos y sintaxis de kubectl más útiles y esenciales para el CKA.
+
+Comandos Esenciales de Kubectl
+
+Estos comandos son la base para interactuar con cualquier recurso en Kubernetes:
+Categoría	Comando Útil	Descripción y Notas CKA
+Visualización	kubectl get <tipo>	Obtener recursos (pods, svc, deploy, nodes, pv, pvc, cm, secret, etc.). Usa -o wide para más detalles o -A o --all-namespaces para todos los espacios de nombres.
+Detalle/Debugging	kubectl describe <tipo> <nombre>	Muestra información detallada sobre un recurso, incluyendo estado, eventos y configuraciones. CRUCIAL para troubleshooting.
+Logs	kubectl logs <pod-name> -f	Muestra logs de un pod. Usa -c <container-name> si hay varios contenedores. -f para seguir el log.
+Acceso a Pod	kubectl exec -it <pod-name> -- <command>	Ejecuta un comando dentro de un contenedor. Usa -- /bin/bash o -- /bin/sh para una shell interactiva.
+Creación Rápida	kubectl create <tipo> <nombre> --image=<imagen>	Crea recursos básicos (como pods o deployments) con comandos imperativos. Útil, pero a menudo se prefiere apply con --dry-run.
+Aplicar Configuración	kubectl apply -f <file.yaml>	Crea o actualiza recursos a partir de un archivo de configuración. Método recomendado para gestión declarativa.
+Eliminar	kubectl delete <tipo> <nombre>	Elimina un recurso. Usa -f <file.yaml> para eliminar por archivo.
+Edición	kubectl edit <tipo> <nombre>	Edita en vivo la configuración de un recurso (usa tu editor configurado, como vi). Útil para correcciones rápidas.
+
+Comandos para Generar YAML (CKA Best Practice)
+
+En el examen CKA, el tiempo es vital. Generar manifiestos con comandos imperativos y modificar el YAML es la forma más rápida de crear recursos.
+Comando/Sintaxis	Ejemplo	Uso CKA
+Generación de YAML	kubectl run mypod --image=nginx --dry-run=client -o yaml > pod.yaml	Genera el manifiesto YAML en el archivo pod.yaml sin crearlo en el clúster. ¡Esencial!
+Generar Deployment	kubectl create deployment my-deploy --image=nginx --dry-run=client -o yaml > deploy.yaml	Crea la plantilla YAML de un Deployment.
+Generar Service	kubectl expose pod mypod --port=80 --target-port=8080 --dry-run=client -o yaml > svc.yaml	Crea la plantilla YAML de un Service.
+
+Gestión de Clusters y Nodos
+
+Comando Útil	Descripción
+kubectl cluster-info	Muestra la información del control plane y services.
+kubectl get nodes	Lista todos los nodos. Usa kubectl describe node <node-name> para detalles.
+kubectl cordon <node-name>	Marca un nodo como no programable (para mantenimiento).
+kubectl uncordon <node-name>	Marca un nodo como programable nuevamente.
+kubectl drain <node-name>	Desaloja los pods de un nodo (para mantenimiento o desmantelamiento). Usa flags como --ignore-daemonsets.
+kubectl api-resources	Lista todos los recursos disponibles en la API.
+kubectl config use-context <context-name>	CRUCIAL para cambiar entre clústeres en el examen.
+kubectl config view	Muestra la configuración de kubeconfig.
+
+
+
+    Consulta exitosa
+
+Obtener una lista exhaustiva de "100 comandos" específicos de kubectl para el examen CKA (Certified Kubernetes Administrator) puede ser complejo, ya que el examen se centra en la resolución práctica de tareas y no en la memorización de un número fijo de comandos.
+
+La clave es dominar los comandos más importantes y, sobre todo, saber cómo usar los comandos imperativos y el parámetro --dry-run para generar manifiestos YAML rápidamente, ya que esto ahorra mucho tiempo en el examen.
+
+A continuación, se presenta una categorización de los comandos y sintaxis de kubectl más útiles y esenciales para el CKA.
+
+Comandos Esenciales de Kubectl
+
+Estos comandos son la base para interactuar con cualquier recurso en Kubernetes:
+Categoría	Comando Útil	Descripción y Notas CKA
+Visualización	kubectl get <tipo>	Obtener recursos (pods, svc, deploy, nodes, pv, pvc, cm, secret, etc.). Usa -o wide para más detalles o -A o --all-namespaces para todos los espacios de nombres.
+Detalle/Debugging	kubectl describe <tipo> <nombre>	Muestra información detallada sobre un recurso, incluyendo estado, eventos y configuraciones. CRUCIAL para troubleshooting.
+Logs	kubectl logs <pod-name> -f	Muestra logs de un pod. Usa -c <container-name> si hay varios contenedores. -f para seguir el log.
+Acceso a Pod	kubectl exec -it <pod-name> -- <command>	Ejecuta un comando dentro de un contenedor. Usa -- /bin/bash o -- /bin/sh para una shell interactiva.
+Creación Rápida	kubectl create <tipo> <nombre> --image=<imagen>	Crea recursos básicos (como pods o deployments) con comandos imperativos. Útil, pero a menudo se prefiere apply con --dry-run.
+Aplicar Configuración	kubectl apply -f <file.yaml>	Crea o actualiza recursos a partir de un archivo de configuración. Método recomendado para gestión declarativa.
+Eliminar	kubectl delete <tipo> <nombre>	Elimina un recurso. Usa -f <file.yaml> para eliminar por archivo.
+Edición	kubectl edit <tipo> <nombre>	Edita en vivo la configuración de un recurso (usa tu editor configurado, como vi). Útil para correcciones rápidas.
+
+Comandos para Generar YAML (CKA Best Practice)
+
+En el examen CKA, el tiempo es vital. Generar manifiestos con comandos imperativos y modificar el YAML es la forma más rápida de crear recursos.
+Comando/Sintaxis	Ejemplo	Uso CKA
+Generación de YAML	kubectl run mypod --image=nginx --dry-run=client -o yaml > pod.yaml	Genera el manifiesto YAML en el archivo pod.yaml sin crearlo en el clúster. ¡Esencial!
+Generar Deployment	kubectl create deployment my-deploy --image=nginx --dry-run=client -o yaml > deploy.yaml	Crea la plantilla YAML de un Deployment.
+Generar Service	kubectl expose pod mypod --port=80 --target-port=8080 --dry-run=client -o yaml > svc.yaml	Crea la plantilla YAML de un Service.
+
+Gestión de Clusters y Nodos
+
+Comando Útil	Descripción
+kubectl cluster-info	Muestra la información del control plane y services.
+kubectl get nodes	Lista todos los nodos. Usa kubectl describe node <node-name> para detalles.
+kubectl cordon <node-name>	Marca un nodo como no programable (para mantenimiento).
+kubectl uncordon <node-name>	Marca un nodo como programable nuevamente.
+kubectl drain <node-name>	Desaloja los pods de un nodo (para mantenimiento o desmantelamiento). Usa flags como --ignore-daemonsets.
+kubectl api-resources	Lista todos los recursos disponibles en la API.
+kubectl config use-context <context-name>	CRUCIAL para cambiar entre clústeres en el examen.
+kubectl config view	Muestra la configuración de kubeconfig.
+
+
+
+Gestión de Despliegues y Rollouts
+
+Comando Útil	Descripción
+kubectl scale deployment <name> --replicas=<num>	Escala un Deployment a un número específico de réplicas.
+kubectl rollout status deployment/<name>	Revisa el estado de un rollout (ejecutándose, completado, etc.).
+kubectl rollout history deployment/<name>	Muestra el historial de revisiones de un Deployment.
+kubectl rollout undo deployment/<name>	Revierte un Deployment a una revisión anterior (o usa --to-revision=<num>).
+kubectl set image deployment/<name> <container>=<new-image>	Actualiza la imagen de un contenedor en un Deployment.
+
+
+
+Solución de Problemas (Troubleshooting)
+
+El CKA dedica una gran parte a la solución de problemas (30% del peso). Estos comandos son vitales:
+Comando Útil	Descripción
+kubectl get events --sort-by=.metadata.creationTimestamp	Muestra eventos recientes en el clúster. Ayuda a identificar fallos en la programación, creación de contenedores, etc.
+kubectl describe pod <name>	Verifica el estado, los eventos, los límites de recursos y los errores de imagen o volumen de un Pod.
+kubectl get pods --field-selector=status.phase=Failed	Filtra Pods por fase de estado para encontrar rápidamente fallos.
+kubectl top node/pod	Muestra el uso de CPU/memoria (requiere la instalación de Metrics Server).
+kubectl get csr / kubectl certificate approve <name>	Comandos para gestionar Certificados (necesario para la gestión de nodos).
+
+
+
+
+
+

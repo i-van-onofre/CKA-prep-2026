@@ -1,0 +1,40 @@
+Authentication and Authorization Demo Guide (5)
+
+While in the default minikube context, create a new deployment in the lfs158 namespace:
+
+~/rbac$ kubectl -n lfs158 create deployment nginx --image=nginx:alpine
+
+deployment.apps/nginx created
+
+From the new context bob-context try to list pods. The attempt fails because user bob has no permissions configured for the bob-context:
+
+~/rbac$ kubectl --context=bob-context get pods
+
+Error from server (Forbidden): pods is forbidden: User "bob" cannot list resource "pods" in API group "" in the namespace "lfs158"
+
+The following steps will assign a limited set of permissions to user bob in the bob-context. 
+
+Create a YAML configuration manifest for a pod-reader Role object, which allows only get, watch, list actions/verbs in the lfs158 namespace against pod resources. Then create the role object and list it from the default minikube context, but from the lfs158 namespace:
+
+~/rbac$ vim role.yaml
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-reader
+  namespace: lfs158
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+
+~/rbac$ kubectl create -f role.yaml
+
+role.rbac.authorization.k8s.io/pod-reader created
+
+~/rbac$ kubectl -n lfs158 get roles
+
+NAME         CREATED AT
+pod-reader   2022-04-11T03:47:45Z
+
+Cont’d on the next page.

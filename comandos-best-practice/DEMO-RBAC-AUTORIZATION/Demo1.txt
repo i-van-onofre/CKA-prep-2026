@@ -1,0 +1,40 @@
+Authentication and Authorization Demo Guide (1)
+
+This exercise guide assumes the following environment, which by default uses the certificate and key from /var/lib/minikube/certs/, and RBAC mode for authorization:
+
+    Minikube v1.32
+    Kubernetes v1.28
+    containerd 1.7.8
+
+This exercise guide was prepared for the video demonstration available at the end of this chapter.
+
+Start Minikube:
+
+$ minikube start
+
+View the content of the kubectl client's configuration manifest, observing the only context minikube and the only user minikube, created by default (the output has been redacted for readability):
+
+$ kubectl config view
+
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority: /home/student/.minikube/ca.crt
+    server: ht‌tps://192.168.99.100:8443
+  name: minikube
+contexts:
+- context:
+    cluster: minikube
+    namespace: default
+    user: minikube
+  name: minikube
+current-context: minikube
+kind: Config
+preferences: {}
+users:
+- name: minikube
+  user:
+    client-certificate: /home/student/.minikube/profiles/minikube/client.crt
+    client-key: /home/student/.minikube/profiles/minikube/client.key
+
+Cont’d on the next page.

@@ -1,0 +1,27 @@
+Multi-Port Services
+
+A Service resource can expose multiple ports at the same time if required. Its configuration is flexible enough to allow for multiple groupings of ports to be defined in the manifest. This is a helpful feature when exposing Pods with one container listening on more than one port, or when exposing Pods with multiple containers listening on one or more ports.
+
+A multi-port Service manifest is provided below:
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  selector:
+    app: myapp
+  type: NodePort
+  ports:
+  - name: http
+    protocol: TCP
+    port: 8080
+    targetPort: 80
+    nodePort: 31080
+  - name: https
+    protocol: TCP
+    port: 8443
+    targetPort: 443
+    nodePort: 31443
+
+The my-service Service resource exposes Pods labeled app==myapp with possibly one container listening on ports 80 and 443, as described by the two targetPort fields. The Service will be visible inside the cluster on its ClusterIP and ports 8080 and 8443 as described by the two port fields, and it will also be accessible to incoming requests from outside the cluster on the two nodePort fields 31080 and 31443. When manifests describe multiple ports, they need to be named as well, for clarity, as described by the two spec.port.name fields with values http and https respectively. This Service is configured to capture traffic on ports 8080 and 8443 from within the cluster, or on ports 31080 and 31443 from outside the cluster, and forward that traffic to the ports 80 and 443 respectively of the Pods running the container.

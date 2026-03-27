@@ -1,0 +1,30 @@
+Volume Types
+
+A directory which is mounted inside a Pod is backed by the underlying Volume Type. A Volume Type decides the properties of the directory, like size, content, default access modes, etc. Some examples of Volume Types that support ephemeral Volumes are:
+
+    emptyDir
+    An empty Volume is created for the Pod as soon as it is scheduled on the worker node. The Volume's life is tightly coupled with the Pod. If the Pod is terminated, the content of emptyDir is deleted forever.
+    hostPath
+    The hostPath Volume Type shares a directory between the host and the Pod. If the Pod is terminated, the content of the Volume is still available on the host.
+    gcePersistentDisk
+    The gcePersistentDisk Volume Type mounts a Google Compute Engine (GCE) persistent disk into a Pod.
+    awsElasticBlockStore
+    The awsElasticBlockStore Volume Type mounts an AWS EBS Volume into a Pod.
+    azureDisk
+    The azureDisk mounts a Microsoft Azure Data Disk into a Pod.
+    azureFile
+    The azureFile mounts a Microsoft Azure File Volume into a Pod.
+    cephfs
+    The cephfs allows for an existing CephFS volume to be mounted into a Pod. When a Pod terminates, the volume is unmounted and the contents of the volume are preserved.
+    nfs
+    The nfs mounts an NFS share into a Pod.
+    iscsi
+    The iscsi mounts an iSCSI share into a Pod.
+    secret
+    The secret Volume Type facilitates the supply of sensitive information, such as passwords, certificates, keys, or tokens to Pods.
+    configMap
+    The configMap objects facilitate the supply of configuration data, or shell commands and arguments into a Pod.
+    persistentVolumeClaim
+    A PersistentVolume is consumed by a Pod using a persistentVolumeClaim.
+
+You can learn more details about Volume Types from the documentation. However, do not be alarmed by the “deprecated” and “removed” notices. They have been added as means of tracking the original in-tree plugins which eventually migrated to the CSI driver implementation. Kubernetes native plugins do not show such a notice.

@@ -1,0 +1,72 @@
+SIMULACRO DE EJERCICIOS CKA (15 tareas)
+Cada ejercicio está pensado para resolverse en 2–6 minutos, igual que en el examen.
+
+1. Crear un Pod simple
+Crea un Pod llamado nginx-pod usando la imagen nginx:1.25 y verifica que esté corriendo.
+
+2. Crear un Deployment
+Crea un Deployment llamado web-deploy con 3 réplicas usando la imagen httpd:2.4. Luego escala el Deployment a 5 réplicas.
+
+3. Actualizar un Deployment
+Actualiza la imagen del Deployment web-deploy a httpd:2.4.58. Si algo falla, haz rollback.
+
+4. Crear un Service
+Expón el Deployment web-deploy con un Service tipo NodePort en el puerto 30080.
+
+5. Crear un ConfigMap y montarlo
+Crea un ConfigMap llamado app-config con:
+
+Código
+APP_MODE=production
+APP_COLOR=blue
+Móntalo como variables de entorno en un Pod llamado config-pod.
+
+6. Crear un Secret
+Crea un Secret llamado db-secret con:
+
+usuario: admin
+
+password: SuperPass123
+
+Úsalo en un Pod como variables de entorno.
+
+7. Crear un PersistentVolume y PersistentVolumeClaim
+Crea un PV de 1Gi llamado data-pv y un PVC llamado data-pvc. Monta el PVC en un Pod y escribe un archivo dentro del volumen.
+
+8. Crear un Ingress
+Crea un Ingress llamado app-ingress que enrute:
+
+/app1 → Service app1-svc
+
+/app2 → Service app2-svc
+
+9. Crear un ServiceAccount y RBAC
+Crea un ServiceAccount llamado viewer-sa. Dale permisos para listar Pods en el namespace actual. Verifica con:
+
+Código
+kubectl auth can-i list pods --as=system:serviceaccount:<ns>:viewer-sa
+10. Drenar un nodo
+Marca un nodo como no disponible para scheduling y drénalo sin matar Pods con PodDisruptionBudget.
+
+11. Agregar un nodo al clúster
+Simula agregar un nodo ejecutando el comando kubeadm join (puedes usar un nodo dummy o solo escribir el comando correcto).
+
+12. Instalar Metrics Server
+Instala Metrics Server y verifica que kubectl top nodes y kubectl top pods funcionen.
+
+13. Solucionar un Pod en CrashLoopBackOff
+Un Pod llamado broken-app está en CrashLoopBackOff. Encuentra la causa usando:
+
+kubectl logs
+
+kubectl describe
+
+Soluciona el problema.
+
+14. Backup y restore de recursos
+Haz un backup de todos los recursos del namespace production en un archivo YAML. Luego restaura el namespace desde ese archivo.
+
+15. Backup de etcd (solo si usas kubeadm)
+Realiza un backup de etcd usando etcdctl snapshot save. Luego valida que el archivo se creó correctamente.
+
+

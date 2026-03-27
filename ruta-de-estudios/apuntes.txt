@@ -1,0 +1,59 @@
+Semana 1: Arquitectura y Fundamentos de Cargas de Trabajo (25% + 15%)
+
+Tema	Puntos Clave a Dominar	Práctica Hands-on Sugerida
+Arquitectura del Clúster (25%)	Componentes del Control Plane (API Server, etcd, Scheduler, Controller Manager) y Worker Node (kubelet, kube-proxy, Container Runtime).	Inspeccionar el estado de los componentes del Control Plane y del Node con systemctl y logs de Pods estáticos.
+Instalación y Configuración (25%)	Backups y restauración de etcd. Uso de kubeadm para inicializar y unir nodos.	Realizar una instantánea de etcd (etcdctl snapshot save) y simular una restauración en un clúster de prueba.
+Pods y Cargas de Trabajo (15%)	Crear y gestionar Pods (multi-contenedor), Deployments, ReplicaSets y Jobs/CronJobs desde cero usando comandos imperativos y YAML.	Escalabilidad: Escalar un Deployment (k scale) y realizar un Rollout/Rollback.
+Mantenimiento de Nodos (25%)	Cordon y Drain de Nodos.	Mover todas las cargas de trabajo de un nodo (Drain), simular mantenimiento y des-acordonar.
+
+
+Semana 2: Redes y Servicios (20%)
+
+Tema	Puntos Clave a Dominar	Práctica Hands-on Sugerida
+Servicios (20%)	Tipos de Service: ClusterIP, NodePort, LoadBalancer y ExternalName. Endpoints.	Crear un Deployment y exponerlo con un Service ClusterIP, luego cambiarlo a NodePort.
+Conectividad de Red	Funcionamiento de kube-proxy. Concepto de CNI (Container Network Interface).	Despliega Pods en diferentes nodos y verifica la comunicación Pod-to-Pod y Pod-to-Service.
+Ingress	Instalar un Ingress Controller (ej. Nginx) y configurar recursos Ingress simples y basados en nombres.	Configurar Ingress para enrutar diferentes URLs a diferentes Services.
+DNS del Clúster	CoreDNS y resolución de DNS dentro del clúster (Service Name → ClusterIP, Pod FQDN).	Probar la resolución de nombres de Service/Pod con kubectl exec en un Pod de utilidad (busybox o alpine).
+
+
+
+Semana 3: Almacenamiento y Configuración (10% + 15%)
+
+Tema	Puntos Clave a Dominar	Práctica Hands-on Sugerida
+Almacenamiento (10%)	Diferencia entre PersistentVolume (PV) y PersistentVolumeClaim (PVC). StorageClass.	Crear un PV estático (HostPath para la práctica local) y un PVC que lo consuma. Montar el PVC en un Pod.
+Volúmenes	Tipos de volúmenes: HostPath, EmptyDir, y cómo montar ConfigMaps/Secrets como volúmenes.	Crear un Pod que persista datos en un PV. Borrar el Pod y recrearlo, verificando que los datos sigan ahí.
+ConfigMaps y Secrets (15%)	Crear y usar ConfigMaps como variables de entorno y como archivos montados. Secrets (codificación Base64).	Usar un ConfigMap para configurar el entorno de una aplicación (ej. una variable de entorno DB_HOST).
+Seguridad de Cargas de Trabajo (15%)	SecurityContext (RunAsUser, Privileged). Resource Quotas y Limits/Requests.	Establecer límites de CPU y memoria para un Pod y verificar que sean respetados.
+
+
+
+Semana 4: Administración de Clústeres y Seguridad (25% + 15%)
+
+Tema	Puntos Clave a Dominar	Práctica Hands-on Sugerida
+Actualizaciones del Clúster (25%)	Actualizar un clúster y sus componentes con kubeadm upgrade.	Practicar el proceso de actualización de versión en un clúster de prueba.
+Resolución de Problemas (30% - INICIO)	Revisar logs y eventos de Pods y Nodos. Usar kubectl describe, kubectl logs, kubectl get events.	Practicar la identificación de fallos comunes: Pods en Pending (Resource Quotas, Scheduler issues) o CrashLoopBackOff (error de aplicación).
+RBAC (Role-Based Access Control) (15%)	ServiceAccounts, Roles, ClusterRoles, RoleBindings y ClusterRoleBindings.	Crear un ServiceAccount con acceso limitado (ej. solo puede ver Pods) y usarlo en un Pod.
+NetworkPolicy (20%)	Restringir el tráfico de red entre Pods usando NetworkPolicies de entrada (Ingress) y salida (Egress).	Implementar una política para que el Frontend solo pueda comunicarse con el Backend (y viceversa).
+
+
+
+Semana 5: Resolución de Problemas (30%) y Simulacros
+
+Tema	Puntos Clave a Dominar	Práctica Hands-on Sugerida
+Problemas de Clúster (30%)	Fallo del API Server o Scheduler. Certificados.	Simular un clúster con un Control Plane dañado (ej. detener el kube-apiserver Pod estático) y repararlo.
+Problemas de Nodo (30%)	Node en estado NotReady. Falla de Kubelet o Container Runtime.	Diagnosticar y reparar un nodo fuera de servicio: revisar logs de Kubelet (journalctl -u kubelet).
+Problemas de Aplicación (30%)	Fallo de DNS, falta de ConfigMap/Secret, volumen no montado.	Practicar la identificación de la causa raíz: un Deployment que no puede resolver el nombre de un Service.
+Simulacro 1 (Tiempo)	Realizar un examen de práctica cronometrado para identificar debilidades y problemas de tiempo.	Usa plataformas de práctica como Killer.sh o laboratorios de KodeKloud para un simulacro real.
+
+
+
+Semana 6: Repaso Final y Exámenes de Práctica
+
+Actividad	Foco	Consejo Clave
+Repaso Rápido	Repasa tus notas y los comandos imperativos clave (etcd backup, drain, upgrades).	Repasa los temas con mayor peso (Arquitectura/Troubleshooting).
+Simulacro 2 (Día del Examen)	Realiza un examen de práctica completo en las condiciones más cercanas posibles al examen.	Gestión del tiempo: No te quedes atascado en una pregunta. Si no la resuelves en 5 minutos, márcala y pasa a la siguiente.
+Simulacro 3 (Temas Débiles)	Concéntrate en practicar solo las áreas que tuviste bajas puntuaciones en los simulacros.	Transforma los fallos del Simulacro 2 en tus propios laboratorios de "resolución de problemas".
+Descanso	Día antes del examen.	Descansa. Confía en tu práctica, no intentes aprender material nuevo.
+
+
+

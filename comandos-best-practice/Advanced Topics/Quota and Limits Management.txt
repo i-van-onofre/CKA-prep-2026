@@ -1,0 +1,70 @@
+Quota and Limits Management
+
+When there are many users sharing a given Kubernetes cluster, there is always a concern for fair usage. A user should not take undue advantage. To address this concern, administrators can use the ResourceQuota API resource, which provides constraints that limit aggregate resource consumption per Namespace.
+
+We can set the following types of quotas per Namespace:
+
+    Compute Resource Quota
+    We can limit the total sum of compute resources (CPU, memory, etc.) that can be requested in a given Namespace.
+    Storage Resource Quota
+    We can limit the total sum of storage resources (PersistentVolumeClaims, requests.storage, etc.) that can be requested.
+    Object Count Quota
+    We can restrict the number of objects of a given type (Pods, ConfigMaps, PersistentVolumeClaims, ReplicationControllers, Services, Secrets, etc.).
+
+Examine the two ResourceQuota manifests below. They exemplifying compute resources quotas (requests and limits) in a given namespace myspace:
+
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: compute-resources
+  namespace: myspace
+spec:
+  hard:
+    requests.cpu: "1"
+    requests.memory: 1Gi
+    limits.cpu: "2"
+    limits.memory: 2Gi
+    requests.nvidia.com/gpu: 4:
+
+and various Kubernetes object counts quotas (ConfigMaps, PVCs, Pods, Services in general, Load Balancer Service types, etc.) in a given namespace myspace:
+
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: object-counts
+  namespace: myspace
+spec:
+  hard:
+    configmaps: "10"
+    persistentvolumeclaims: "4"
+    pods: "4"
+    secrets: "10"
+    services: "10"
+    services.loadbalancers: "2"
+
+An additional resource that helps limit resource allocation to pods and containers in a namespace, is the LimitRange, used in conjunction with the ResourceQuota API resource. A LimitRange can:
+
+    Set compute resources usage limits per Pod or Container in a namespace.
+    Set storage request limits per PersistentVolumeClaim in a namespace.
+    Set a request to limit ratio for a resource in a namespace.
+    Set default requests and limits and automatically inject them into Containers' environments at runtime.
+
+Examine the LimitRange manifest below. It exemplifies how CPU constraints are enforced for individual Containers of Pods running in the myspace namespace:
+
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: cpu-constraint-per-container
+  namespace: myspace
+spec:
+  limits:
+  - default:            # default limits
+      cpu: 500m
+    defaultRequest:     # default requests
+      cpu: 500m
+    max:                # max defines the highest value of the range
+      cpu: "1"
+    min:                # min defines the lowest value of the range
+      cpu: 100m
+    type: Container
+

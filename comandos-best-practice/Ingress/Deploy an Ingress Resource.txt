@@ -1,0 +1,5 @@
+Deploy an Ingress Resource
+
+Once the Ingress Controller is deployed, we can create an Ingress resource using the kubectl create command. For example, if we create a virtual-host-ingress.yaml file with the Name-Based Virtual Hosting Ingress rule definition that we saw in the Ingress (2) section, then we use the following command to create an Ingress resource:
+
+$ kubectl create -f virtual-host-ingress.yaml

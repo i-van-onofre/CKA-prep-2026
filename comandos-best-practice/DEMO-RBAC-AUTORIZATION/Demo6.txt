@@ -1,0 +1,35 @@
+Authentication and Authorization Demo Guide (6)
+
+Create a YAML configuration manifest for a rolebinding object, which assigns the permissions of the pod-reader Role to user bob. Then create the rolebinding object and list it from the default minikube context, but from the lfs158 namespace:
+
+~/rbac$ vim rolebinding.yaml
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pod-read-access
+  namespace: lfs158
+subjects:
+- kind: User
+  name: bob
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: pod-reader
+  apiGroup: rbac.authorization.k8s.io
+
+~/rbac$ kubectl create -f rolebinding.yaml 
+
+rolebinding.rbac.authorization.k8s.io/pod-read-access created
+
+~/rbac$ kubectl -n lfs158 get rolebindings
+
+NAME              ROLE              AGE
+pod-read-access   Role/pod-reader   28s
+
+Now that we have assigned permissions to bob, we can successfully list pods from the new context bob-context.
+
+~/rbac$ kubectl --context=bob-context get pods
+
+NAME                     READY   STATUS    RESTARTS   AGE
+nginx-565785f75c-kl25r   1/1     Running   0          7m41s

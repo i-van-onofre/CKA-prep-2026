@@ -1,0 +1,20 @@
+Use ConfigMaps Inside Pods: As Volumes
+
+We can mount a vol-config-map ConfigMap as a Volume inside a Pod. The configMap Volume plugin converts the ConfigMap object into a mountable resource. For each key in the ConfigMap, a file gets created in the mount path (where the file is named with the key name) and the respective key's value becomes the content of the file:
+
+...
+  containers:
+  - name: myapp-vol-container
+    image: myapp
+    volumeMounts:
+    - name: config-volume
+      mountPath: /etc/config
+  volumes:
+  - name: config-volume
+    configMap:
+      name: vol-config-map
+...
+
+For more details, please explore the documentation on using ConfigMaps.
+
+

@@ -1,0 +1,22 @@
+PersistentVolumeClaims
+
+A PersistentVolumeClaim (PVC) is a request for storage by a user. Users request for PersistentVolume resources based on storage class, access mode, size, and optionally volume mode. There are four access modes: ReadWriteOnce (read-write by a single node), ReadOnlyMany (read-only by many nodes), ReadWriteMany (read-write by many nodes), and ReadWriteOncePod (read-write by a single pod). The optional volume modes, filesystem or block device, allow volumes to be mounted into a pod's directory or as a raw block device respectively. By design Kubernetes does not support object storage, but it can be implemented with the help of custom resource types. Once a suitable PersistentVolume is found, it is bound to a PersistentVolumeClaim.
+
+ 
+
+PersistentVolumeClaim
+
+ 
+
+After a successful bound, the PersistentVolumeClaim resource can be used by the containers of the Pod.
+
+ 
+
+PersistentVolumeClaim Used In a Pod
+
+ 
+
+Once a user finishes its work, the attached PersistentVolumes can be released. The underlying PersistentVolumes can then be reclaimed (for an admin to verify and/or aggregate data), deleted (both data and volume are deleted), or recycled for future usage (only data is deleted), based on the configured persistentVolumeReclaimPolicy property.
+
+To learn more, you can check out the PersistentVolumeClaims.
+

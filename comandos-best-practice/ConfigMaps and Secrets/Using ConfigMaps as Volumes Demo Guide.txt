@@ -1,0 +1,63 @@
+Using ConfigMaps as Volumes Demo Guide
+
+This exercise guide was prepared for the video demonstration available in this chapter. It includes an index.html file and a Deployment definition manifest that can be used as templates to define other similar objects as needed. The goal of the demo is to store the custom webserver index.html file in a ConfigMap object, which is mounted by the nginx container specified by the Pod template nested in the Deployment definition manifest.
+
+The webserver index file:
+
+$ vim index.html
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to GREEN App!</title>
+<style>
+    body {
+        width: 35em;
+        margin: 0 auto;
+        font-family: Tahoma, Verdana, Arial, sans-serif;
+        background-color: GREEN;
+    }
+</style>
+</head>
+<body>
+<h1 style=\"text-align: center;\">Welcome to GREEN App!</h1>
+</body>
+</html>
+
+The Deployment definition manifest:
+
+$ vim web-green-with-cm.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: green-web
+  name: green-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: green-web
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: green-web
+    spec:
+      volumes:
+      - name: web-config
+        configMap:
+          name: green-web-cm
+      containers:
+      - image: nginx
+        name: nginx
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - mountPath: /usr/share/nginx/html
+          name: web-config
+status: {}
+

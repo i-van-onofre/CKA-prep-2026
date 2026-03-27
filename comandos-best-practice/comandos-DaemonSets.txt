@@ -1,0 +1,43 @@
+Below is an example of a DaemonSet object's definition manifest in YAML format:
+
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fluentd-agent
+  namespace: default
+  labels:
+    k8s-app: fluentd-agent
+spec:
+  selector:
+    matchLabels:
+      k8s-app: fluentd-agent
+  template:
+    metadata:
+      labels:
+        k8s-app: fluentd-agent
+    spec:
+      containers:
+      - name: fluentd
+        image: quay.io/fluentd_elasticsearch/fluentd:v4.5.2
+
+The above definition manifest, if stored by a fluentd-ds.yaml file, is loaded into the cluster to run a set of identical Pod replicas, with their associated container image, matching in count the number of cluster nodes. While create is exemplified below, advanced Kubernetes practitioners may opt to use apply instead:
+
+$ kubectl create -f fluentd-ds.yaml
+
+Before advancing to more complex topics, become familiar with DaemonSet operations with additional commands such as:
+
+$ kubectl apply -f fluentd-ds.yaml --record
+$ kubectl get daemonsets
+$ kubectl get ds -o wide
+$ kubectl get ds fluentd-agent -o yaml
+$ kubectl get ds fluentd-agent -o json
+$ kubectl describe ds fluentd-agent
+$ kubectl rollout status ds fluentd-agent
+$ kubectl rollout history ds fluentd-agent
+$ kubectl rollout history ds fluentd-agent --revision=1
+$ kubectl set image ds fluentd-agent fluentd=quay.io/fluentd_elasticsearch/fluentd:v4.6.2 --record
+$ kubectl rollout history ds fluentd-agent --revision=2
+$ kubectl rollout undo ds fluentd-agent --to-revision=1
+$ kubectl get all -l k8s-app=fluentd-agent -o wide
+$ kubectl delete ds fluentd-agent
+$ kubectl get ds,po -l k8s-app=fluentd-agent

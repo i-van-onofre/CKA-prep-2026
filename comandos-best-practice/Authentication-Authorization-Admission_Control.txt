@@ -1,0 +1,108 @@
+Attribute-Based Access Control (ABAC)
+
+With the ABAC authorizer, Kubernetes grants access to API requests, which combine policies with attributes. In the following example, user bob can only read Pods in the Namespace lfs158.
+
+{
+  "apiVersion": "abac.authorization.kubernetes.io/v1beta1",
+  "kind": "Policy",
+  "spec": {
+    "user": "bob",
+    "namespace": "lfs158",
+    "resource": "pods",
+    "readonly": true
+  }
+}
+
+To enable ABAC mode, we start the API server with the --authorization-mode=ABAC option, while specifying the authorization policy with --authorization-policy-file=PolicyFile.json. For more details, please review the ABAC authorization documentation.
+
+
+-------------------------------------------------------------------------------------------------------
+
+Role-Based Access Control (RBAC)
+
+In general, with RBAC we regulate the access to resources based on the Roles of individual users. In Kubernetes, multiple Roles can be attached to subjects like users, service accounts, etc. While creating the Roles, we restrict resource access by specific operations, such as create, get, update, patch, etc. These operations are referred to as verbs. In RBAC, we can create two kinds of Roles:
+
+    Role
+    A Role grants access to resources within a specific Namespace.
+    ClusterRole
+    A ClusterRole grants the same permissions as Role does, but its scope is cluster-wide.
+
+In this course, we will focus on the first kind, Role. Below you will find an example:
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: lfs158
+  name: pod-reader
+rules:
+- apiGroups: [""] # "" indicates the core API group
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+
+The manifest defines a pod-reader role, which has access only to read the Pods of lfs158 Namespace.
+
+For comparison, a ClusterRole example is provided below:
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cluster-admin
+rules:
+- apiGroups:
+  - '*' # All API groups
+  resources:
+  - '*' # All resources
+  verbs:
+  - '*' # All operations
+- nonResourceURLs:
+  - '*' # All non resource URLs, such as "/healthz"
+  verbs:
+  - '*' # All operations
+
+The manifest defines a cluster-admin cluster role that is fully permissive.
+
+Once the role is created, we can bind it to users with a RoleBinding object. There are two kinds of RoleBindings:
+
+    RoleBinding
+    It allows us to bind users to the same namespace as a Role. We could also refer to a ClusterRole in RoleBinding, which would grant permissions to Namespace resources defined in the ClusterRole within the RoleBinding’s Namespace.
+    ClusterRoleBinding
+    It allows us to grant access to resources at a cluster-level and to all Namespaces.
+
+In this course, we will focus on the first kind RoleBinding. Below, you will find an example:
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pod-read-access
+  namespace: lfs158
+subjects:
+- kind: User
+  name: bob
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: pod-reader
+  apiGroup: rbac.authorization.k8s.io
+
+The manifest defines a bind between the pod-reader Role and user bob, to restrict the user to only read the Pods of the lfs158 Namespace.
+
+For comparison, a ClusterRoleBinding example is provided below:
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cluster-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: Group
+  name: system:admins
+
+The manifest defines a bind between the cluster-admin ClusterRole and all users of the group system:admins.
+
+To enable the RBAC mode, we start the API server with the --authorization-mode=RBAC option, allowing us to dynamically configure policies. For more details, please review the RBAC mode.
+
+

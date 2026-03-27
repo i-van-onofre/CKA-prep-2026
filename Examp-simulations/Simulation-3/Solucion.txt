@@ -1,0 +1,384 @@
+1. Nodo en estado NotReady
+Pasos típicos de diagnóstico en el nodo afectado:
+
+bash
+# Ver estado desde el control plane
+kubectl get nodes
+kubectl describe node <NODO>
+
+# En el nodo:
+systemctl status kubelet
+journalctl -xeu kubelet
+
+# Ver si el nodo tiene swap activado
+swapon --show
+# Si hay swap:
+swapoff -a
+# Asegúrate de que esté deshabilitado en /etc/fstab
+Verifica también:
+
+bash
+# Conectividad al API server
+curl -k https://<API_SERVER_IP>:6443/healthz
+
+# cgroup driver (systemd vs cgroupfs) debe ser consistente entre kubelet y container runtime
+cat /var/lib/kubelet/config.yaml | grep cgroupDriver
+Tras corregir (swap, cgroups, certificados, etc.):
+
+bash
+systemctl restart kubelet
+kubectl get nodes
+
+
+
+2. Regenerar certificados del control plane (kubeadm)
+En el nodo control plane:
+
+bash
+# Ver estado actual de certificados
+kubeadm certs check-expiration
+
+# Renovar todos los certificados
+kubeadm certs renew all
+
+# Reiniciar componentes (si usas manifests estáticos)
+systemctl restart kubelet
+Verifica:
+
+bash
+kubectl get nodes
+kubectl get pods -n kube-system
+
+
+3. Pod con seccomp personalizado
+Asumiendo que el archivo existe en el nodo en:
+
+/var/lib/kubelet/seccomp/profiles/audit.json
+
+Pod (a partir de Kubernetes modernos, usando seccompProfile):
+
+yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: secure-pod
+  annotations:
+    # Para clusters antiguos:
+    # seccomp.security.alpha.kubernetes.io/pod: localhost/profile.json
+spec:
+  securityContext:
+    seccompProfile:
+      type: Localhost
+      localhostProfile: profiles/audit.json
+      # Kubernetes suele buscar en /var/lib/kubelet/seccomp/
+  containers:
+  - name: app
+    image: nginx
+Aplica:
+
+bash
+kubectl apply -f secure-pod.yaml
+
+
+
+
+4. Pod con AppArmor
+Asumiendo que el nodo tiene un perfil AppArmor llamado nginx-profile cargado.
+
+yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: armor-pod
+  annotations:
+    container.apparmor.security.beta.kubernetes.io/app: localhost/nginx-profile
+spec:
+  containers:
+  - name: app
+    image: nginx
+
+
+
+5. Pod con volumen CSI csi-hostpath
+Asumiendo que el driver csi-hostpath está instalado y el storageClassName adecuado existe (p.ej. csi-hostpath-sc):
+
+yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: csi-pod
+spec:
+  containers:
+  - name: app
+    image: busybox
+    command: ["sh", "-c", "ls /data; sleep 3600"]
+    volumeMounts:
+    - name: data
+      mountPath: /data
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: csi-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: csi-pvc
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: csi-hostpath-sc
+
+
+
+
+6. Pod multi-contenedor (sidecar pattern)
+yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: multi-pod
+spec:
+  volumes:
+  - name: shared
+    emptyDir: {}
+  containers:
+  - name: nginx
+    image: nginx
+    volumeMounts:
+    - name: shared
+      mountPath: /usr/share/nginx/html
+  - name: sidecar
+    image: busybox
+    command: ["sh", "-c", "while true; do date >> /shared/log.txt; sleep 5; done"]
+    volumeMounts:
+    - name: shared
+      mountPath: /shared
+
+
+
+7. Pod con readinessGate
+El Pod no estará listo hasta que alguien (un controlador, script, etc.) establezca la condición example.com/ready=True en su status.
+
+yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: rg-pod
+spec:
+  readinessGates:
+  - conditionType: example.com/ready
+  containers:
+  - name: app
+    image: nginx
+Simular la condición (no recomendado en examen real, pero útil para practicar):
+
+bash
+kubectl patch pod rg-pod --type='json' -p='[
+  {"op": "add", "path": "/status/conditions", "value":[
+    {"type":"example.com/ready","status":"True","reason":"Manual","message":"Ready"}
+  ]}
+]'
+
+
+
+
+8. Deployment con topologySpreadConstraints
+Suponiendo nodos con label topology.kubernetes.io/zone:
+
+yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spread-app
+spec:
+  replicas: 6
+  selector:
+    matchLabels:
+      app: spread-app
+  template:
+    metadata:
+      labels:
+        app: spread-app
+    spec:
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            app: spread-app
+      containers:
+      - name: app
+        image: nginx
+
+
+
+9. Pod con emptyDir con sizeLimit
+yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: emptydir-pod
+spec:
+  volumes:
+  - name: cache
+    emptyDir:
+      sizeLimit: 500Mi
+  containers:
+  - name: app
+    image: busybox
+    command: ["sh", "-c", "df -h /cache; sleep 3600"]
+    volumeMounts:
+    - name: cache
+      mountPath: /cache
+
+
+
+10. Pod con ephemeral CSI volume
+Ejemplo genérico (depende del driver real instalado):
+
+yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: csi-ephemeral-pod
+spec:
+  containers:
+  - name: app
+    image: busybox
+    command: ["sh", "-c", "ls /data; sleep 3600"]
+    volumeMounts:
+    - name: data
+      mountPath: /data
+  volumes:
+  - name: data
+    csi:
+      driver: csi.storage.k8s.io/ephemeral
+      volumeAttributes:
+        foo: "bar"
+En muchos entornos de práctica se usa un driver tipo csi-hostpath en modo ephemeral; ajusta el driver según corresponda.
+
+
+
+11. Pod con token de ServiceAccount proyectado
+yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sa-projected-pod
+spec:
+  serviceAccountName: default
+  containers:
+  - name: app
+    image: busybox
+    command: ["sh", "-c", "ls /var/run/secrets/tokens; cat /var/run/secrets/tokens/token; sleep 3600"]
+    volumeMounts:
+    - name: k8s-creds
+      mountPath: /var/run/secrets/tokens
+      readOnly: true
+  volumes:
+  - name: k8s-creds
+    projected:
+      sources:
+      - serviceAccountToken:
+          path: token
+          audience: api
+          expirationSeconds: 3600
+      - configMap:
+          name: kube-root-ca.crt
+          items:
+          - key: ca.crt
+            path: ca.crt
+      - downwardAPI:
+          items:
+          - path: "namespace"
+            fieldRef:
+              fieldPath: metadata.namespace
+(En algunos clusters la CA viene como kube-root-ca.crt ConfigMap automático.)
+
+
+
+12. Pod con preStop hook
+yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: prestop-pod
+spec:
+  containers:
+  - name: app
+    image: nginx
+    lifecycle:
+      preStop:
+        exec:
+          command: ["sh", "-c", "sleep 10"]
+
+
+
+13. Pod con postStart hook
+yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: poststart-pod
+spec:
+  containers:
+  - name: app
+    image: busybox
+    command: ["sh", "-c", "cat /tmp/started; sleep 3600"]
+    lifecycle:
+      postStart:
+        exec:
+          command: ["sh", "-c", "echo started > /tmp/started"]
+
+
+14. Pod con ambos hooks (postStart y preStop)
+yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: lifecycle-pod
+spec:
+  containers:
+  - name: app
+    image: busybox
+    command: ["sh", "-c", "echo running; sleep 3600"]
+    lifecycle:
+      postStart:
+        exec:
+          command: ["sh", "-c", "echo pod started at $(date) > /tmp/started"]
+      preStop:
+        exec:
+          command: ["sh", "-c", "echo pod stopping at $(date) >> /tmp/started; sleep 10"]
+
+
+15. Pod con contenedores efímeros (debugging)
+No defines el contenedor efímero en el YAML inicial; lo agregas en tiempo de ejecución.
+
+Pod base:
+
+yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: debug-target
+spec:
+  containers:
+  - name: app
+    image: nginx
+Aplica:
+
+bash
+kubectl apply -f debug-target.yaml
+kubectl get pods
+Agregar contenedor efímero:
+
+bash
+kubectl debug -it debug-target --image=busybox --target=app -- sh
+# Ahora estás dentro del ephemeral container
+También es posible hacerlo via YAML patch, pero en el examen lo esperable es que uses kubectl debug.
+

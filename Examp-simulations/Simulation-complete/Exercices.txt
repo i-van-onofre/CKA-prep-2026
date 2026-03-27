@@ -1,0 +1,128 @@
+🧑‍💻 SIMULACRO COMPLETO CKA – 2 HORAS (24 TAREAS)
+Duración sugerida: 120 minutos Puntaje total: 100 puntos Cada tarea indica su valor.
+
+✅ ESCENARIO GENERAL DEL CLÚSTER
+Estás administrando un clúster Kubernetes con las siguientes características:
+
+1 nodo control-plane
+
+2 nodos worker
+
+kubeadm
+
+CNI instalado (Calico o Weave)
+
+Metrics Server NO instalado
+
+Ingress Controller NO instalado
+
+Todos los comandos deben ejecutarse como usuario con permisos administrativos
+
+Usa kubectl con contexto por defecto
+
+🧩 TAREAS DEL EXAMEN
+1. Crear un namespace para producción (2 puntos)
+Crea un namespace llamado production.
+
+2. Crear un Pod simple (3 puntos)
+En el namespace production, crea un Pod llamado frontend usando la imagen nginx:1.25.
+
+3. Crear un Deployment escalable (4 puntos)
+Crea un Deployment llamado api-deploy con 3 réplicas usando la imagen httpd:2.4.
+
+4. Exponer el Deployment (4 puntos)
+Expón api-deploy con un Service tipo ClusterIP en el puerto 80.
+
+5. Crear un ConfigMap y usarlo (5 puntos)
+Crea un ConfigMap llamado app-config con:
+
+Código
+MODE=prod
+VERSION=1.0
+Crea un Pod que use estas variables como env.
+
+6. Crear un Secret y montarlo (5 puntos)
+Crea un Secret llamado db-secret con:
+
+Código
+user=admin
+password=SuperPass
+Móntalo como variables de entorno en un Pod llamado db-client.
+
+7. Crear un PersistentVolume y PersistentVolumeClaim (6 puntos)
+Crea un PV de 2Gi llamado data-pv usando hostPath. Crea un PVC llamado data-pvc. Monta el PVC en un Pod y escribe un archivo dentro del volumen.
+
+8. Crear un DaemonSet (5 puntos)
+Crea un DaemonSet llamado log-agent que ejecute un contenedor busybox que imprima logs cada 5 segundos.
+
+9. Crear un CronJob (4 puntos)
+Crea un CronJob llamado backup-job que ejecute cada minuto el comando date.
+
+10. Crear un Ingress (6 puntos)
+Instala un Ingress Controller (el que prefieras). Crea un Ingress llamado web-ingress que enrute:
+
+/app1 → Service app1-svc
+
+/app2 → Service app2-svc
+
+11. Crear un ServiceAccount con permisos limitados (5 puntos)
+Crea un ServiceAccount llamado viewer-sa que solo pueda listar Pods en el namespace actual.
+
+12. Crear un Pod con liveness y readiness probes (5 puntos)
+Crea un Pod llamado health-pod con:
+
+Imagen: nginx
+
+Liveness probe: GET /healthz
+
+Readiness probe: GET /ready
+
+13. Crear un Pod con initContainer (4 puntos)
+El initContainer debe crear un archivo /work/ready. El contenedor principal debe mostrar el contenido de /work.
+
+14. Crear un Pod con tolerations (4 puntos)
+Debe tolerar el taint:
+
+Código
+key=maintenance:NoSchedule
+15. Crear un Pod con nodeSelector (3 puntos)
+Debe ejecutarse solo en nodos con la etiqueta:
+
+Código
+disk=ssd
+16. Crear un Pod con topologySpreadConstraints (6 puntos)
+Distribuye los Pods equitativamente entre zonas usando:
+
+Código
+topology.kubernetes.io/zone
+17. Instalar Metrics Server (4 puntos)
+Instálalo y verifica que kubectl top nodes funcione.
+
+18. Hacer troubleshooting de un Pod CrashLoopBackOff (6 puntos)
+Hay un Pod llamado broken-app que está en CrashLoopBackOff. Encuentra la causa y arréglalo.
+
+19. Drenar un nodo para mantenimiento (4 puntos)
+Drena un nodo worker sin matar Pods protegidos por PodDisruptionBudget.
+
+20. Agregar un nodo al clúster (4 puntos)
+Simula agregar un nodo usando el comando kubeadm join.
+
+21. Backup de etcd (6 puntos)
+Realiza un backup de etcd usando etcdctl snapshot save.
+
+22. Restaurar un Deployment desde backup (4 puntos)
+Haz backup del Deployment api-deploy en un archivo YAML. Elimínalo y restáuralo.
+
+23. Crear un Pod con seccomp (5 puntos)
+Usa un perfil local llamado audit.json.
+
+24. Crear un Pod con contenedor efímero (5 puntos)
+Crea un Pod llamado debug-target. Luego agrega un contenedor efímero usando kubectl debug.
+
+✅ FIN DEL EXAMEN SIMULADO (2 HORAS)
+Cuando estés listo, puedo darte:
+
+✅ El solucionario completo ✅ Corrección de tus respuestas ✅ Un cuarto simulacro aún más difícil ✅ O un entrenamiento cronometrado donde te voy guiando como en el examen real
+
+
+

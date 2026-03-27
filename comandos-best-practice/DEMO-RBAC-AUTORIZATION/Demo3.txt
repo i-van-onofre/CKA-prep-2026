@@ -1,0 +1,47 @@
+Authentication and Authorization Demo Guide (3)
+
+View the certificate, encode it in base64, and assign it to the request field in the signing-request.yaml file:
+
+~/rbac$ cat bob.csr | base64 | tr -d '\n','%'
+
+LS0tLS1CRUd...1QtLS0tLQo=
+
+~/rbac$ vim signing-request.yaml
+
+apiVersion: certificates.k8s.io/v1
+kind: CertificateSigningRequest
+metadata:
+  name: bob-csr
+spec:
+  groups:
+  - system:authenticated
+  request: LS0tLS1CRUd...1QtLS0tLQo=
+  signerName: kubernetes.io/kube-apiserver-client
+  usages:
+  - digital signature
+  - key encipherment
+  - client auth
+
+Create the certificate signing request object, then list the certificate signing request objects. It shows a pending state:
+
+~/rbac$ kubectl create -f signing-request.yaml
+
+certificatesigningrequest.certificates.k8s.io/bob-csr created
+
+~/rbac$ kubectl get csr
+
+NAME      AGE   SIGNERNAME                            REQUESTOR       CONDITION
+bob-csr   12s   kubernetes.io/kube-apiserver-client   minikube-user   Pending
+
+Approve the certificate signing request object, then list the certificate signing request objects again. It shows both approved and issued states:
+
+~/rbac$ kubectl certificate approve bob-csr
+
+certificatesigningrequest.certificates.k8s.io/bob-csr approved
+
+~/rbac$ kubectl get csr
+
+NAME      AGE   SIGNERNAME                            REQUESTOR       CONDITION
+bob-csr   57s   kubernetes.io/kube-apiserver-client   minikube-user   Approved,Issued
+
+Cont’d on the next page.

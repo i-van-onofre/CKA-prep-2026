@@ -1,0 +1,275 @@
+✅ SOLUCIONARIO COMPLETO – SIMULACRO CKA
+
+1. Crear un Pod simple
+bash
+kubectl run nginx-pod --image=nginx:1.25
+kubectl get pods
+
+
+2. Crear un Deployment y escalarlo
+bash
+kubectl create deployment web-deploy --image=httpd:2.4 --replicas=3
+kubectl scale deployment web-deploy --replicas=5
+
+
+3. Actualizar un Deployment y hacer rollback
+bash
+kubectl set image deployment/web-deploy httpd=httpd:2.4.58
+kubectl rollout status deployment/web-deploy
+# Si falla:
+kubectl rollout undo deployment/web-deploy
+
+
+
+4. Crear un Service NodePort
+bash
+kubectl expose deployment web-deploy --type=NodePort --port=80 --name=web-svc
+kubectl patch svc web-svc -p '{"spec": {"ports": [{"port":80,"nodePort":30080}]}}'
+
+
+
+5. Crear un ConfigMap y usarlo en un Pod
+ConfigMap:
+
+bash
+kubectl create configmap app-config \
+  --from-literal=APP_MODE=production \
+  --from-literal=APP_COLOR=blue
+Pod:
+
+yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: config-pod
+spec:
+  containers:
+  - name: app
+    image: busybox
+    command: ["sh", "-c", "env; sleep 3600"]
+    envFrom:
+    - configMapRef:
+        name: app-config
+Aplicar:
+
+bash
+kubectl apply -f config-pod.yaml
+
+
+
+6. Crear un Secret y usarlo
+bash
+kubectl create secret generic db-secret \
+  --from-literal=user=admin \
+  --from-literal=password=SuperPass123
+Pod:
+
+yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: secret-pod
+spec:
+  containers:
+  - name: app
+    image: busybox
+    command: ["sh", "-c", "env; sleep 3600"]
+    env:
+    - name: DB_USER
+      valueFrom:
+        secretKeyRef:
+          name: db-secret
+          key: user
+    - name: DB_PASS
+      valueFrom:
+        secretKeyRef:
+          name: db-secret
+          key: password
+
+
+
+7. Crear PV, PVC y montarlo
+PV:
+
+yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: data-pv
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /data
+PVC:
+
+yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: data-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+Pod:
+
+yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pvc-pod
+spec:
+  containers:
+  - name: app
+    image: busybox
+    command: ["sh", "-c", "echo hola > /data/hola.txt; sleep 3600"]
+    volumeMounts:
+    - mountPath: /data
+      name: vol
+  volumes:
+  - name: vol
+    persistentVolumeClaim:
+      claimName: data-pvc
+
+
+
+8. Crear un Ingress
+yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app-ingress
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /app1
+        pathType: Prefix
+        backend:
+          service:
+            name: app1-svc
+            port:
+              number: 80
+      - path: /app2
+        pathType: Prefix
+        backend:
+          service:
+            name: app2-svc
+            port:
+              number: 80
+
+
+
+9. ServiceAccount + RBAC
+bash
+kubectl create sa viewer-sa
+Role:
+
+yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-viewer
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list"]
+RoleBinding:
+
+yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: viewer-binding
+subjects:
+- kind: ServiceAccount
+  name: viewer-sa
+roleRef:
+  kind: Role
+  name: pod-viewer
+  apiGroup: rbac.authorization.k8s.io
+Verificación:
+
+bash
+kubectl auth can-i list pods --as=system:serviceaccount:<ns>:viewer-sa
+
+
+10. Drenar un nodo
+bash
+kubectl cordon <node>
+kubectl drain <node> --ignore-daemonsets --pod-selector=''
+
+
+11. Agregar un nodo (simulación kubeadm)
+bash
+kubeadm join <control-plane-ip>:6443 --token <token> \
+  --discovery-token-ca-cert-hash sha256:<hash>
+
+
+12. Instalar Metrics Server
+bash
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+Verificar:
+
+bash
+kubectl top nodes
+kubectl top pods
+
+
+13. Solucionar CrashLoopBackOff
+Pasos típicos:
+
+bash
+kubectl describe pod broken-app
+kubectl logs broken-app
+Errores comunes:
+
+comando incorrecto → corregir command
+
+imagen incorrecta → corregir image
+
+falta de permisos → ajustar RBAC
+
+falta de variables → agregar env vars
+
+Aplicar fix:
+
+bash
+kubectl edit pod broken-app
+
+
+14. Backup y restore de un namespace
+Backup:
+
+bash
+kubectl get all -n production -o yaml > backup.yaml
+Restore:
+
+bash
+kubectl apply -f backup.yaml
+
+
+
+15. Backup de etcd (kubeadm)
+bash
+ETCDCTL_API=3 etcdctl \
+  --endpoints=https://127.0.0.1:2379 \
+  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+  --cert=/etc/kubernetes/pki/etcd/server.crt \
+  --key=/etc/kubernetes/pki/etcd/server.key \
+  snapshot save /var/lib/etcd/snapshot.db
+
+
+Verificar:
+
+bash
+ls -lh /var/lib/etcd/snapshot.db
+
+
+
+

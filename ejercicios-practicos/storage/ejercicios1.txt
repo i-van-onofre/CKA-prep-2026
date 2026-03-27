@@ -1,0 +1,124 @@
+ Ejercicios Prácticos: Almacenamiento (Storage - 10%)
+
+Ejercicio 1: Configuración de StorageClass y Provisión Dinámica
+
+El objetivo es permitir que los desarrolladores soliciten almacenamiento sin necesidad de crear manualmente un PV.
+
+    Crear una StorageClass (SC):
+
+        Tarea: Crea una StorageClass llamada fast-storage.
+
+        Parámetros: Configúrala para usar el provisioner más simple y común en entornos de laboratorio (como k8s.io/minikube-hostpath o el provisioner de tu entorno de nube, si estás usando uno, por ejemplo, kubernetes.io/gce-pd o disk.csi.azure.com).
+
+        Política de Reclamación: Asegúrate de que su reclaimPolicy sea Retain (Retener).
+
+        # storageclass-retain.yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fast-storage
+provisioner: k8s.io/minikube-hostpath # Sustituye si usas otro provisioner
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+
+
+Provisión Dinámica (Crear PVC):
+
+    Tarea: Crea un PersistentVolumeClaim (PVC) llamado data-claim-retain que solicite 5Gi de almacenamiento y utilice el StorageClass fast-storage.
+
+    Modo de Acceso: Usa el modo ReadWriteOnce (RWO).
+
+Verificación y Uso:
+
+    Tarea: Verifica que un PersistentVolume (PV) haya sido creado automáticamente (provisión dinámica) y esté enlazado (Bound) al PVC.
+
+    Tarea: Crea un Pod llamado app-writer que use el PVC data-claim-retain y escriba un archivo de texto en el volumen.
+
+-------------------------------------------------
+Ejercicio 2: Diferentes Modos de Acceso y ReclaimPolicy
+
+El objetivo es entender cómo los modos de acceso limitan su uso y qué sucede con los datos después de borrar el PVC.
+
+    Crear una StorageClass con Delete:
+
+        Tarea: Crea una nueva StorageClass llamada temporary-storage con la reclaimPolicy establecida en Delete.
+
+    Provisión con ReadOnlyMany:
+
+        Tarea: Crea un PVC llamado ro-many-claim que solicite 2Gi y utilice la StorageClass temporary-storage.
+
+        Modo de Acceso: Usa el modo ReadOnlyMany (ROX).
+
+    Prueba de Modos de Acceso:
+
+        Tarea: Intenta crear dos Pods simultáneamente (app-reader-1 y app-reader-2) que monten el volumen asociado al PVC ro-many-claim.
+
+        Verificación: Ambos Pods deberían poder montarlo y acceder a los datos, ya que ROX permite múltiples lectores.
+
+    Prueba de Política Delete (Borrado):
+
+        Tarea: Elimina el PVC ro-many-claim.
+
+        Verificación: Confirma que tanto el PVC como el PV asociado hayan sido eliminados (debido a la política Delete de la StorageClass).
+
+---------------------------------------------------------------------------------------------------------------
+Ejercicio 3: Configuración y Gestión de PVs Estáticos (Pre-Provisión)
+
+El objetivo es practicar el flujo de provisión estática (cuando un administrador crea el PV manualmente antes de que el usuario lo solicite).
+
+    Creación de un PersistentVolume (PV Estático):
+
+        Tarea: Crea un PV llamado manual-pv con una capacidad de 10Gi.
+
+        Modo de Acceso: Configúralo con ReadWriteMany (RWX).
+
+        Ubicación: Configúralo para usar hostPath (por ejemplo, /mnt/data/vol1 en el nodo).
+
+        Reclaim Policy: Usa Recycle (si está soportado por el provisioner, sino Retain).
+
+        Clase: No especifiques una storageClassName para simular un PV genérico.
+
+    Enlace (Binding) con PVC:
+
+        Tarea: Crea un PVC llamado rwx-claim que solicite 10Gi de almacenamiento con el modo de acceso ReadWriteMany (RWX).
+
+        Clase: Asegúrate de que este PVC no especifique una storageClassName para que intente enlazarse al PV estático (manual-pv).
+
+    Verificación de Enlace:
+
+        Tarea: Verifica que el PV manual-pv haya cambiado su estado de Available a Bound al PVC rwx-claim.
+
+    Uso con Múltiples Escritores:
+
+        Tarea: Crea dos Pods simultáneamente (app-writer-a y app-writer-b) que monten el volumen asociado al PVC rwx-claim.
+
+        Verificación: Confirma que ambos Pods puedan montarlo y escribir datos, demostrando el modo ReadWriteMany.
+
+
+----------------------------------------------------------------------------------------------------------------
+Ejercicio 4: Resolución de Problemas (Troubleshooting) de Almacenamiento
+
+El objetivo es diagnosticar y solucionar problemas comunes de Pods en estado Pending relacionados con el almacenamiento.
+
+    Provocar Fallo de Pending (Sin PV):
+
+        Tarea: Crea un PVC llamado too-large-claim que solicite 500Gi de almacenamiento y use la StorageClass fast-storage (del Ejercicio 1).
+
+        Verificación: Observa que el PVC quede en estado Pending.
+
+        Diagnóstico: Utiliza kubectl describe pvc too-large-claim para encontrar la razón (el provisioner no puede satisfacer una solicitud tan grande).
+
+    Provocar Fallo de Pending (Modo de Acceso Incorrecto):
+
+        Tarea: Usando el PV estático manual-pv (del Ejercicio 3, configurado como RWX), intenta crear un PVC que solicite el mismo tamaño (10Gi) pero solo el modo de acceso ReadWriteOnce (RWO).
+
+        Verificación: El PVC debería quedar en estado Pending o enlazarse incorrectamente.
+
+        Diagnóstico: Utiliza kubectl describe pvc para ver el mensaje: el PVC no puede enlazarse al PV porque los Modos de Acceso (Access Modes) solicitados no coinciden exactamente con los Modos de Acceso disponibles en el PV.
+
+    Solución:
+
+        Tarea: Modifica el PVC del paso 2 para solicitar el modo ReadWriteMany (RWX).
+
+        Verificación: El PVC debería pasar inmediatamente a estado Bound.
+

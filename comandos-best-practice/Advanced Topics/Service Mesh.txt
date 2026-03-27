@@ -1,0 +1,19 @@
+Service Mesh
+
+Service Mesh is a third party solution alternative to the Kubernetes native application connectivity and exposure achieved with Services paired with Ingress Controllers. Service Mesh tools are gaining popularity especially with larger organizations managing larger, more dynamic Kubernetes clusters. These third party solutions introduce features such as service discovery, mutual TLS (mTLS) certificates for encryption, multi-cloud routing, and traffic telemetry.
+
+A Service Mesh is an implementation that relies on a proxy component part of the Data Plane, which is then managed through a Control Plane. The Control Plane runs agents responsible for the service discovery, telemetry, load balancing, network policy, and optionally ingress and/or egress gateway. The Data Plane proxy component is typically injected into Pods, and it is responsible for handling all Pod-to-Pod communication, while maintaining a constant communication with the Control Plane of the Service Mesh. A less frequent Data Plane implementation deploys a single proxy component on each Kubernetes Node, an approach that is less invasive than the proxy injected in each Pod.
+
+As most Service Mesh implementations pack a variety of features, they gradually become critical observability and security tools, providing real-time visibility into intra-cluster traffic patterns while offering Kubernetes operators with alternative means to restrict and encrypt Pod-to-Pod communication.
+
+Several implementations of Service Mesh are:
+
+    Consul by HashiCorp
+    Istio is one of the most popular service mesh solutions, backed by Google, IBM and Lyft
+    Kuma by Kong
+    Linkerd a CNCF project
+    Cilium an eBPF-based service mesh
+    Traefik Mesh by Containous, the developers of Traefik proxy ingress controller
+    Tanzu Service Mesh by VMware
+
+

@@ -1,0 +1,52 @@
+Ingress (2)
+
+This diagram presents a Name-Based Virtual Hosting Ingress rule: 
+
+ 
+
+Name-Based Virtual Hosting Ingress
+
+Name-Based Virtual Hosting Ingress
+
+ 
+
+We can also define Fanout Ingress rules, presented in the example definition and the diagram below, when requests to example.com/blue and example.com/green would be forwarded to webserver-blue-svc and webserver-green-svc, respectively:
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/service-upstream: "true"
+  name: fan-out-ingress
+  namespace: default
+spec:
+  ingressClassName: nginx 
+  rules:
+  - host: example.com
+    http:
+      paths:
+      - path: /blue
+        backend:
+          service:
+            name: webserver-blue-svc
+            port:
+              number: 80
+        pathType: ImplementationSpecific
+      - path: /green
+        backend:
+          service:
+            name: webserver-green-svc
+            port:
+              number: 80
+        pathType: ImplementationSpecific
+
+ 
+
+Fanout Ingress
+
+Fanout Ingress
+
+ 
+
+The Ingress resource does not do any request forwarding by itself, it merely accepts the definitions of traffic routing rules. The ingress is fulfilled by an Ingress Controller, which is a reverse proxy responsible for traffic routing based on rules defined in the Ingress resource.
+

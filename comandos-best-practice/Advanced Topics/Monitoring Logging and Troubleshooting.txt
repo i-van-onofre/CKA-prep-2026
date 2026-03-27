@@ -1,0 +1,35 @@
+Monitoring, Logging, and Troubleshooting
+
+In Kubernetes, we have to collect resource usage data by Pods, Services, nodes, etc., to understand the overall resource consumption and to make decisions for scaling a given application. Two popular Kubernetes monitoring solutions are the Kubernetes Metrics Server and Prometheus. 
+
+    Metrics Server
+    Metrics Server is a cluster-wide aggregator of resource usage data - a relatively new feature in Kubernetes, available as a plugin. With the metrics-server installed, we can easily extract resource utilization data from the cluster with the help of the kubectl top nodes and kubectl top pods commands. Both commands are namespace specific and support sorting with the help of the --sort-by=cpu or memory options.
+    Prometheus
+    Prometheus, now a graduated project of CNCF (Cloud Native Computing Foundation), can also be used to scrape the resource usage from different Kubernetes components and objects. Using its client libraries, we can also instrument the code of our application.
+
+Another important aspect for troubleshooting and debugging is logging, in which we collect the logs from different components of a given system. In Kubernetes, we can collect logs from different cluster components, objects, nodes, etc. Unfortunately, however, Kubernetes does not provide cluster-wide logging by default, therefore third party tools are required to centralize and aggregate cluster logs. A popular method to collect logs is using Elasticsearch together with Fluentd with custom configuration as an agent on the nodes. Fluentd is an open source data collector, which is also a graduated project of CNCF.
+
+The third-party troubleshooting tools are addressing a shortcoming of Kubernetes with regards to its logging capability. Although we can extract container logs from the cluster, we are limited only to logs of currently running containers, and in the case of several consecutive container restarts due to failures - the logs of the very last failed container (using the -p or --previous flags). The logs can be displayed for a single container pod or a specific container of a multi-container pod (supply the pod-name and hit the TAB key for a listing of its available containers):
+
+$ kubectl logs pod-name
+
+$ kubectl logs pod-name container-name
+
+$ kubectl logs pod-name container-name -p
+
+In addition, a user can run a custom command in a running container of a pod, or interact with the running container from the terminal (using the -it flag and invoking the shell command line interpreter of the container):
+
+$ kubectl exec pod-name -- ls -la /
+
+$ kubectl exec pod-name -c container-name -- env
+
+$ kubectl exec pod-name -c container-name -it -- /bin/sh
+
+When the pod-name is followed by the -c flag, hit the TAB key for a listing of its available containers. There are scenarios when the pods of an application do not reach the expected running state, visible in the output of the kubectl get pods command. In order to discover what prevents the pod from running - whether a missing dependency, container image or runtime issue, we can view the events for the entire cluster or for a specific pod in the output of the describe command. Currently there are two distinct commands that list cluster events:
+
+$ kubectl get events
+
+$ kubectl events
+
+$ kubectl describe pod pod-name
+

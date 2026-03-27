@@ -1,0 +1,36 @@
+Use ConfigMaps Inside Pods: As Environment Variables
+
+Inside a Container, we can retrieve the key-value data of an entire ConfigMap or the values of specific ConfigMap keys as environment variables.
+
+In the following example all the myapp-full-container Container's environment variables receive the values of the full-config-map ConfigMap keys:
+
+...
+  containers:
+  - name: myapp-full-container
+    image: myapp
+    envFrom:
+    - configMapRef:
+      name: full-config-map
+...
+
+In the following example the myapp-specific-container Container's environment variables receive their values from specific key-value pairs from two separate ConfigMaps, config-map-1 and config-map-2 respectively:
+
+...
+  containers:
+  - name: myapp-specific-container
+    image: myapp
+    env:
+    - name: SPECIFIC_ENV_VAR1
+      valueFrom:
+        configMapKeyRef:
+          name: config-map-1
+          key: SPECIFIC_DATA
+    - name: SPECIFIC_ENV_VAR2
+      valueFrom:
+        configMapKeyRef:
+          name: config-map-2
+          key: SPECIFIC_INFO
+...
+
+With the configuration presented above, we will get the SPECIFIC_ENV_VAR1 environment variable set to the value of SPECIFIC_DATA key from config-map-1 ConfigMap, and SPECIFIC_ENV_VAR2 environment variable set to the value of SPECIFIC_INFO key from config-map-2 ConfigMap.
+

@@ -1,0 +1,532 @@
+1. Namespace production
+bash
+kubectl create namespace production
+kubectl get ns
+
+
+2. Pod frontend en production
+bash
+kubectl run frontend -n production --image=nginx:1.25
+kubectl get pods -n production
+
+
+
+3. Deployment api-deploy (3 réplicas)
+bash
+kubectl create deployment api-deploy --image=httpd:2.4 --replicas=3 -n production
+kubectl get deploy -n production
+
+
+4. Service ClusterIP para api-deploy
+bash
+kubectl expose deployment api-deploy \
+  --type=ClusterIP \
+  --port=80 \
+  --name=api-svc \
+  -n production
+
+kubectl get svc -n production
+
+
+
+5. ConfigMap app-config + Pod que lo use
+bash
+kubectl create configmap app-config \
+  --from-literal=MODE=prod \
+  --from-literal=VERSION=1.0 \
+  -n production
+app-pod.yaml:
+
+yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-pod
+  namespace: production
+spec:
+  containers:
+  - name: app
+    image: busybox
+    command: ["sh", "-c", "env; sleep 3600"]
+    envFrom:
+    - configMapRef:
+        name: app-config
+bash
+kubectl apply -f app-pod.yaml
+
+
+
+6. Secret db-secret + Pod db-client
+bash
+kubectl create secret generic db-secret \
+  --from-literal=user=admin \
+  --from-literal=password=SuperPass \
+  -n production
+db-client.yaml:
+
+yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: db-client
+  namespace: production
+spec:
+  containers:
+  - name: client
+    image: busybox
+    command: ["sh", "-c", "env; sleep 3600"]
+    env:
+    - name: DB_USER
+      valueFrom:
+        secretKeyRef:
+          name: db-secret
+          key: user
+    - name: DB_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: db-secret
+          key: password
+bash
+kubectl apply -f db-client.yaml
+
+
+
+7. PV data-pv, PVC data-pvc y Pod
+pv.yaml:
+
+yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: data-pv
+spec:
+  capacity:
+    storage: 2Gi
+  accessModes:
+  - ReadWriteOnce
+  hostPath:
+    path: /data-pv
+pvc.yaml:
+
+yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: data-pvc
+  namespace: production
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+pv-pod.yaml:
+
+yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pv-pod
+  namespace: production
+spec:
+  containers:
+  - name: app
+    image: busybox
+    command: ["sh", "-c", "echo 'hola CKA' > /data/hola.txt; sleep 3600"]
+    volumeMounts:
+    - name: data
+      mountPath: /data
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: data-pvc
+bash
+kubectl apply -f pv.yaml
+kubectl apply -f pvc.yaml
+kubectl apply -f pv-pod.yaml
+
+
+
+8. DaemonSet log-agent
+log-agent.yaml:
+
+yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: log-agent
+  namespace: production
+spec:
+  selector:
+    matchLabels:
+      app: log-agent
+  template:
+    metadata:
+      labels:
+        app: log-agent
+    spec:
+      containers:
+      - name: logger
+        image: busybox
+        command: ["sh", "-c", "while true; do echo $(date) log-agent; sleep 5; done"]
+bash
+kubectl apply -f log-agent.yaml
+
+
+
+9. CronJob backup-job
+yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: backup-job
+  namespace: production
+spec:
+  schedule: "* * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: backup
+            image: busybox
+            command: ["sh", "-c", "date; sleep 5"]
+          restartPolicy: Never
+bash
+kubectl apply -f backup-job.yaml
+
+
+
+10. Ingress Controller + web-ingress
+Ejemplo usando NGINX Ingress Controller:
+
+bash
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
+web-ingress.yaml (en el namespace donde estén los services app1-svc y app2-svc, supongamos production):
+
+yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web-ingress
+  namespace: production
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /app1
+        pathType: Prefix
+        backend:
+          service:
+            name: app1-svc
+            port:
+              number: 80
+      - path: /app2
+        pathType: Prefix
+        backend:
+          service:
+            name: app2-svc
+            port:
+              number: 80
+bash
+kubectl apply -f web-ingress.yaml
+
+
+11. ServiceAccount viewer-sa con permisos para listar Pods
+bash
+kubectl create sa viewer-sa -n production
+role-viewer.yaml:
+
+yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-viewer
+  namespace: production
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list"]
+rb-viewer.yaml:
+
+yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: viewer-binding
+  namespace: production
+subjects:
+- kind: ServiceAccount
+  name: viewer-sa
+  namespace: production
+roleRef:
+  kind: Role
+  name: pod-viewer
+  apiGroup: rbac.authorization.k8s.io
+bash
+kubectl apply -f role-viewer.yaml
+kubectl apply -f rb-viewer.yaml
+kubectl auth can-i list pods --as=system:serviceaccount:production:viewer-sa -n production
+
+
+12. Pod health-pod con liveness y readiness
+yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: health-pod
+  namespace: production
+spec:
+  containers:
+  - name: app
+    image: nginx
+    ports:
+    - containerPort: 80
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: 80
+      initialDelaySeconds: 10
+      periodSeconds: 10
+    readinessProbe:
+      httpGet:
+        path: /ready
+        port: 80
+      initialDelaySeconds: 5
+      periodSeconds: 5
+bash
+kubectl apply -f health-pod.yaml
+(en la práctica, deberías servir esas rutas; en el examen muchas veces solo piden definir la probe)
+
+
+13. Pod con initContainer (/work/ready)
+yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: init-work-pod
+  namespace: production
+spec:
+  volumes:
+  - name: workdir
+    emptyDir: {}
+  initContainers:
+  - name: init
+    image: busybox
+    command: ["sh", "-c", "echo ready > /work/ready"]
+    volumeMounts:
+    - name: workdir
+      mountPath: /work
+  containers:
+  - name: main
+    image: busybox
+    command: ["sh", "-c", "cat /work/ready; sleep 3600"]
+    volumeMounts:
+    - name: workdir
+      mountPath: /work
+bash
+kubectl apply -f init-work-pod.yaml
+
+
+
+14. Pod con toleration para key=maintenance:NoSchedule
+yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: tolerant-pod
+  namespace: production
+spec:
+  tolerations:
+  - key: "maintenance"
+    operator: "Exists"
+    effect: "NoSchedule"
+  containers:
+  - name: app
+    image: nginx
+bash
+kubectl apply -f tolerant-pod.yaml
+
+
+15. Pod con nodeSelector disk=ssd
+bash
+# Ejemplo de cómo etiquetar un nodo (lo harías solo si lo piden):
+# kubectl label node <worker-node> disk=ssd
+ssd-pod.yaml:
+
+yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ssd-pod
+  namespace: production
+spec:
+  nodeSelector:
+    disk: ssd
+  containers:
+  - name: app
+    image: nginx
+bash
+kubectl apply -f ssd-pod.yaml
+
+
+
+16. Deployment con topologySpreadConstraints
+yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spread-api
+  namespace: production
+spec:
+  replicas: 6
+  selector:
+    matchLabels:
+      app: spread-api
+  template:
+    metadata:
+      labels:
+        app: spread-api
+    spec:
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            app: spread-api
+      containers:
+      - name: app
+        image: nginx
+bash
+kubectl apply -f spread-api.yaml
+
+
+
+17. Instalar Metrics Server
+bash
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+Verificar:
+
+bash
+kubectl top nodes
+kubectl top pods -A
+
+
+
+18. Troubleshooting broken-app (CrashLoopBackOff)
+Pasos generales:
+
+bash
+kubectl get pod broken-app -n production
+kubectl describe pod broken-app -n production
+kubectl logs broken-app -n production
+Ejemplos de fixes típicos:
+
+Imagen incorrecta:
+
+bash
+kubectl set image pod/broken-app app=nginx:1.25 -n production
+Comando mal → kubectl edit pod broken-app -n production y corriges command / args.
+
+Env faltante → agregas variables o Secret/ConfigMap.
+
+Lo importante en el examen es mostrar que identificas la causa con logs + describe y luego aplicas el fix.
+
+
+
+19. Drenar un nodo worker
+bash
+kubectl get nodes
+kubectl cordon <worker-node>
+kubectl drain <worker-node> --ignore-daemonsets --delete-emptydir-data
+# Si hay PDBs, puedes necesitar flags o ajustar, pero nunca romper PDBs en el examen.
+
+
+
+
+20. Simular kubeadm join
+Ejemplo de comando:
+
+bash
+kubeadm join <control-plane-ip>:6443 --token <token> \
+  --discovery-token-ca-cert-hash sha256:<hash>
+En el examen muchas veces basta con redactar correctamente el comando (lo sacas de kubeadm token create --print-join-command).
+
+
+
+
+21. Backup de etcd con etcdctl (kubeadm)
+En el control-plane:
+
+bash
+export ETCDCTL_API=3
+
+etcdctl \
+  --endpoints=https://127.0.0.1:2379 \
+  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+  --cert=/etc/kubernetes/pki/etcd/server.crt \
+  --key=/etc/kubernetes/pki/etcd/server.key \
+  snapshot save /var/lib/etcd/ckabackup.db
+Verificar:
+
+bash
+ls -lh /var/lib/etcd/ckabackup.db
+
+
+
+22. Backup y restore del Deployment api-deploy
+bash
+kubectl get deploy api-deploy -n production -o yaml > api-deploy-backup.yaml
+
+kubectl delete deploy api-deploy -n production
+
+kubectl apply -f api-deploy-backup.yaml
+kubectl get deploy api-deploy -n production
+
+
+
+23. Pod con seccomp audit.json
+Suponiendo perfil en /var/lib/kubelet/seccomp/audit.json:
+
+yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: seccomp-pod
+  namespace: production
+spec:
+  securityContext:
+    seccompProfile:
+      type: Localhost
+      localhostProfile: audit.json
+  containers:
+  - name: app
+    image: nginx
+bash
+kubectl apply -f seccomp-pod.yaml
+
+
+
+24. Pod con contenedor efímero (kubectl debug)
+Pod base:
+
+yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: debug-target
+  namespace: production
+spec:
+  containers:
+  - name: app
+    image: nginx
+bash
+kubectl apply -f debug-target.yaml
+kubectl get pods -n production
+Agregar contenedor efímero:
+
+bash
+kubectl debug -it debug-target -n production --image=busybox --target=app -- sh
+# Ya estás dentro del ephemeral container
+

@@ -1,0 +1,32 @@
+Security Contexts and Pod Security Admission
+
+At times we need to define specific privileges and access control settings for Pods and Containers. Security Contexts allow us to set Discretionary Access Control for object access permissions, privileged running, capabilities, security labels, etc. However, their effect is limited to the individual Pods and Containers where such context configuration settings are incorporated in the spec section.
+
+Inspect the Pod manifest below. It defines three generic contexts at the Pod level that will be inherited by all Containers of the Pod. In addition, it defines a context that will specifically apply to the busy Container of the Pod:
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: demo
+spec:
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 3000
+    fsGroup: 2000
+  volumes:
+  - name: vol
+    emptyDir: {}
+  containers:
+  - name: busy
+    image: busybox:1.28
+    command: [ "sh", "-c", "sleep infinity" ]
+    volumeMounts:
+    - name: vol
+      mountPath: /data/demo
+    securityContext:
+      allowPrivilegeEscalation: false
+
+It sets the user ID to 1000 and group ID to 3000 for all processes running in all Containers of the Pod, and it sets the group ID 2000 for the owner of the vol volume mounted at /data/demo on the Container’s filesystem. In addition, the busy Container’s children process are not allowed to gain privileges that exceed the parent process privileges.
+
+In order to apply security settings to multiple Pods and Containers cluster-wide, we can use the Pod Security Admission, a built-in admission controller for Pod Security that is enabled by default in the API Server. It can enforce the three Pod Security Standards at namespace level, by automating the security context restriction to Pods when they are deployed. Each Pod Security Standard profile, privileged, baseline, and restricted, defines a level of security that ranges from entirely unrestricted (for privileged workload), to enforcing Pod hardening best practices (for security critical applications and less trusted users). The security levels are defined by sets of Pod security context controls that are pre-determined for each standard.
+

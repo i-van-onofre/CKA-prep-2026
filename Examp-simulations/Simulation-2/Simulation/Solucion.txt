@@ -1,0 +1,363 @@
+✅ SOLUCIONARIO – EJERCICIOS AVANZADOS CKA
+1. Namespace con ResourceQuota
+bash
+kubectl create ns prod
+resourcequota.yaml
+
+yaml
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: prod-quota
+  namespace: prod
+spec:
+  hard:
+    requests.cpu: "2"
+    requests.memory: 4Gi
+    pods: "10"
+bash
+kubectl apply -f resourcequota.yaml
+
+
+
+2. Pod con requests y limits
+yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: limited-pod
+  namespace: prod
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+      limits:
+        cpu: "200m"
+        memory: "256Mi"
+bash
+kubectl apply -f limited-pod.yaml
+
+
+
+3. Deployment con probes
+yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: health-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: health-app
+  template:
+    metadata:
+      labels:
+        app: health-app
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 80
+          initialDelaySeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 80
+          initialDelaySeconds: 5
+
+
+
+4. DaemonSet
+yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: log-agent
+spec:
+  selector:
+    matchLabels:
+      app: log-agent
+  template:
+    metadata:
+      labels:
+        app: log-agent
+    spec:
+      containers:
+      - name: logger
+        image: busybox
+        command: ["sh", "-c", "while true; do echo log; sleep 5; done"]
+
+
+
+5. Job y CronJob
+Job:
+
+yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: data-job
+spec:
+  template:
+    spec:
+      containers:
+      - name: job
+        image: busybox
+        command: ["sh", "-c", "echo processing"]
+      restartPolicy: Never
+CronJob:
+
+yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: backup-job
+spec:
+  schedule: "* * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: backup
+            image: busybox
+            command: ["sh", "-c", "date"]
+          restartPolicy: Never
+
+
+
+6. Pod con initContainer
+yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: init-pod
+spec:
+  volumes:
+  - name: workdir
+    emptyDir: {}
+  initContainers:
+  - name: init
+    image: busybox
+    command: ["sh", "-c", "echo ready > /work/ready"]
+    volumeMounts:
+    - name: workdir
+      mountPath: /work
+  containers:
+  - name: main
+    image: busybox
+    command: ["sh", "-c", "cat /work/ready; sleep 3600"]
+    volumeMounts:
+    - name: workdir
+      mountPath: /work
+
+
+7. NetworkPolicy restrictiva
+yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend
+  namespace: prod
+spec:
+  podSelector:
+    matchLabels:
+      app: app
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          role: frontend
+  policyTypes:
+  - Ingress
+
+
+
+8. ServiceAccount con permisos cluster-wide
+bash
+kubectl create sa cluster-reader
+ClusterRole:
+
+yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cluster-reader-role
+rules:
+- apiGroups: [""]
+  resources: ["pods", "nodes"]
+  verbs: ["get", "list"]
+ClusterRoleBinding:
+
+yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cluster-reader-binding
+subjects:
+- kind: ServiceAccount
+  name: cluster-reader
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: cluster-reader-role
+  apiGroup: rbac.authorization.k8s.io
+
+
+
+9. Pod con volumen projected
+yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: projected-pod
+spec:
+  containers:
+  - name: app
+    image: busybox
+    command: ["sh", "-c", "ls /projected; sleep 3600"]
+    volumeMounts:
+    - name: proj
+      mountPath: /projected
+  volumes:
+  - name: proj
+    projected:
+      sources:
+      - configMap:
+          name: my-config
+      - secret:
+          name: my-secret
+      - downwardAPI:
+          items:
+          - path: "labels"
+            fieldRef:
+              fieldPath: metadata.labels
+
+
+
+10. Troubleshooting DNS
+Pasos típicos:
+
+bash
+kubectl get pods -n kube-system -l k8s-app=kube-dns
+kubectl logs -n kube-system deploy/coredns
+kubectl get configmap coredns -n kube-system -o yaml
+kubectl exec dns-test -- cat /etc/resolv.conf
+Soluciones comunes:
+
+Reiniciar CoreDNS
+
+Corregir ConfigMap
+
+Ajustar dnsPolicy
+
+
+
+
+
+11. Pod con hostPath
+yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hostpath-pod
+spec:
+  containers:
+  - name: app
+    image: busybox
+    command: ["sh", "-c", "echo test >> /logs/test.txt; sleep 3600"]
+    volumeMounts:
+    - name: logs
+      mountPath: /logs
+  volumes:
+  - name: logs
+    hostPath:
+      path: /var/log
+      type: Directory
+
+
+
+12. Pod con toleration
+yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: tolerant-pod
+spec:
+  tolerations:
+  - key: "maintenance"
+    operator: "Exists"
+    effect: "NoSchedule"
+  containers:
+  - name: app
+    image: nginx
+
+
+
+13. Deployment con RollingUpdate
+yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: roll-app
+spec:
+  replicas: 3
+  strategy:
+    rollingUpdate:
+      maxSurge: 2
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: roll-app
+  template:
+    metadata:
+      labels:
+        app: roll-app
+    spec:
+      containers:
+      - name: app
+        image: nginx:1.25
+Actualizar:
+
+bash
+kubectl set image deployment/roll-app app=nginx:1.26
+kubectl rollout status deployment/roll-app
+
+
+
+14. Pod con runtimeClass
+yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sandboxed-pod
+spec:
+  runtimeClassName: gvisor
+  containers:
+  - name: app
+    image: nginx
+
+
+15. Backup y restore de un Deployment
+Backup:
+
+bash
+kubectl get deploy web-deploy -o yaml > web-backup.yaml
+Eliminar:
+
+bash
+kubectl delete deploy web-deploy
+Restaurar:
+
+bash
+kubectl apply -f web-backup.yaml
+
+

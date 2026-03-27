@@ -1,0 +1,14 @@
+With the LoadBalancer ServiceType:
+
+    NodePort and ClusterIP are automatically created, and the external load balancer will route to them.
+    The Service is exposed at a static port on each worker node.
+    The Service is exposed externally using the underlying cloud provider's load balancer feature.
+
+
+LoadBalancer
+
+LoadBalancer
+
+ 
+
+The LoadBalancer ServiceType will only work if the underlying infrastructure supports the automatic creation of Load Balancers and have the respective support in Kubernetes, as is the case with the Google Cloud Platform and AWS. If no such feature is configured, the LoadBalancer IP address field is not populated, it remains in Pending state, but the Service will still work as a typical NodePort type Service.

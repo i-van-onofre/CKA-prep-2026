@@ -1,0 +1,88 @@
+🧠 TERCER SET DE EJERCICIOS CKA – NIVEL EXPERTO
+1. Reparar un nodo que aparece como NotReady
+Un nodo aparece como NotReady. Tu tarea es identificar y corregir el problema revisando:
+
+kubelet
+
+cgroup drivers
+
+certificados
+
+swap
+
+conectividad con el API Server
+
+2. Regenerar certificados del control plane
+Simula que el certificado del API Server expiró. Regénéralo usando:
+
+kubeadm cert renew
+
+reinicio de componentes
+
+3. Configurar un Pod con seccomp
+Crea un Pod llamado secure-pod que use un perfil seccomp personalizado ubicado en:
+
+Código
+/var/lib/kubelet/seccomp/profiles/audit.json
+4. Crear un Pod con AppArmor
+Crea un Pod llamado armor-pod que use un perfil AppArmor llamado nginx-profile.
+
+5. Crear un Pod que use un volumen CSI
+Crea un Pod que monte un volumen CSI usando el driver:
+
+Código
+csi-hostpath
+6. Crear un Pod con múltiples containers (sidecar pattern)
+Crea un Pod llamado multi-pod con:
+
+contenedor principal: nginx
+
+sidecar: busybox que haga tail a un archivo compartido
+
+7. Crear un Pod que use un readinessGate
+Crea un Pod que no esté listo hasta que un controlador externo establezca una condición personalizada:
+
+Código
+type: example.com/ready
+8. Crear un Pod que use topologySpreadConstraints
+Crea un Deployment que distribuya Pods equitativamente entre zonas:
+
+Código
+topology.kubernetes.io/zone
+9. Crear un Pod que use un ephemeral volume (emptyDir + sizeLimit)
+Crea un Pod con un emptyDir limitado a:
+
+Código
+sizeLimit: 500Mi
+10. Crear un Pod que use un ephemeral CSI volume
+Usa el driver:
+
+Código
+csi.storage.k8s.io/ephemeral
+11. Crear un Pod que use un token de ServiceAccount proyectado
+Debe incluir:
+
+token JWT
+
+CA bundle
+
+namespace
+
+12. Crear un Pod que use un preStop hook
+El hook debe ejecutar:
+
+Código
+sleep 10
+13. Crear un Pod que use un postStart hook
+El hook debe escribir un archivo en /tmp/started.
+
+14. Crear un Pod que use un lifecycle con ambos hooks
+Combina preStop y postStart en un solo Pod.
+
+15. Crear un Pod que use un container ephemeral (alpha feature)
+Simula un Pod que permita ejecutar contenedores efímeros para debugging:
+
+Código
+kubectl debug
+
+

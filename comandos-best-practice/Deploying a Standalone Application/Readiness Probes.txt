@@ -1,0 +1,19 @@
+Readiness Probes
+
+Sometimes, while initializing, applications have to meet certain conditions before they become ready to serve traffic. These conditions include ensuring that the dependent service is ready, or acknowledging that a large dataset needs to be loaded, etc. In such cases, we use Readiness Probes and wait for a certain condition to occur. Only then, the application can serve traffic.
+
+A Pod with containers that do not report ready status will not receive traffic from Kubernetes Services.
+
+...
+    readinessProbe:
+          exec:
+            command:
+            - cat
+            - /tmp/healthy
+          initialDelaySeconds: 5 
+          periodSeconds: 5
+...
+
+Readiness Probes are configured similarly to Liveness Probes. Their configuration fields and options also remain the same. Readiness probes are also defined as Readiness command, Readiness HTTP request, TCP readiness probe, and gRPC readiness probe.
+
+Please review the Readiness Probes for more details.
